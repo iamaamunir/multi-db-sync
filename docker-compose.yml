@@ -1,45 +1,48 @@
-version: '3.8'
-
 services:
     postgres:
-      image: postgres:latest
+      image: postgres:bookworm
       container_name: postgres-db
       environment:
-        - POSTGRES_URI=${POSTGRES_URI}
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+        - POSTGRES_DB=dual_sync_db
       networks:
         - dbSync_network
-      ports:
-        - "5432:5432"
       volumes:
         - postgres-data:/var/lib/postgresql/data
+      ports:
+        - "5433:5432"
     
     mongo:
-      image: mongo:latest
+      image: mongo:7.0
       container_name: mongo-db
       environment:
         - MONGODB_URI=${MONGODB_URI}
       networks:
         - dbSync_network
-      ports:
-        - "27017:27017"
       volumes:
         - mongo-data:/data/db
+      ports:
+        - "27017:27017"
     
     backend:
-      build: ./backend
+      build: 
+        context: .
+        dockerfile: Dockerfile
       container_name: backend_app
+      restart: unless-stopped
       ports:
-        - "3000:3000"
+        - "3000:5000"
       env_file:
-        - ./backend/.env
+        - .env
       networks:
         - dbSync_network
       depends_on:
       - postgres
       - mongo
 volumes:
-  postgres_data:
-  mongo_data:
+  postgres-data:
+  mongo-data:
        
 networks:
   dbSync_network:
